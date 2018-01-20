@@ -7,6 +7,11 @@ import { HttpClient,HttpHeaders } from '@angular/common/http';
 import { MessageService} from './message.service';
 import { Hero } from './hero';
 
+//The heroes web API expects a special header in HTTP save requests. 
+// That header is in the httpOption constant defined in the HeroService.
+const httpOptions = {
+	headers: new HttpHeaders({ 'Content-Type':'application/json'})
+	}
 
 @Injectable()
 export class HeroService {
@@ -14,7 +19,7 @@ export class HeroService {
 
   constructor( 
   	private messageService: MessageService,
-  	private http:HttpClient
+  	private http:HttpClient,
   ) { }
 
 /**
@@ -49,11 +54,27 @@ getHeroes(): Observable<Hero[]> {
 		);
 }
 
-
+/** GET hero by id. Will 404 if id not found */
 getHero(id:number) : Observable<Hero> {
+	const url = `${this.heroesUrl}/${id}`;
+	return this.http.get<Hero>(url)
+		.pipe(
+			tap(_ => this.log(`fetch hero id=${id}`)),
+			catchError(this.handleError<Hero>(`getHero id = ${id}`))
+		);
 	//Todo: send the messenger _after_ fetching the hero
-	this.messageService.add(`HeroService: fetched hero id=${id}`);
-	return of(HEROES.find(hero=>hero.id ===id));
+	// this.messageService.add(`HeroService: fetched hero id=${id}`);
+	// return of(HEROES.find(hero=>hero.id ===id));
+}
+
+
+/** PUT: update the hero on the server */
+updateHero (hero:Hero): Observable<any> {
+	return this.http.put(this.heroesUrl, hero,httpOptions)
+		.pipe(
+			tap(_=> this.log(`updated hero id=${hero.id}`)),
+			catchError(this.handleError<any>('updateHero'))
+		);
 }
 
 
